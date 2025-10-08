@@ -319,22 +319,73 @@ TPL_BASE = """
 <title>出金管理</title>
 <link rel=stylesheet href="https://unpkg.com/@picocss/pico@2/css/pico.min.css">
 <style>
-body{background:#f4f6f9;font-family:"Meiryo","メイリオ",sans-serif}
-.wrap{max-width:1280px;margin:auto;padding:12px}
-.table-wrap{background:#fff;border:1px solid #e6eaf0;border-radius:12px;overflow:auto;box-shadow:0 2px 8px rgba(16,24,40,.04)}
-th,td{padding:.6rem .8rem;white-space:nowrap;font-size:13px}
+/* ===== 基本 ===== */
+:root{
+  --bg:#f5f7fb; --card:#fff; --line:#e6eaf0; --text:#1f2937;
+  --muted:#6b7280; --pri:#2563eb; --pri-600:#1e40af;
+  --ok:#16a34a; --ok-bg:#e9f9ee; --warn:#b45309; --warn-bg:#fff4dd;
+  --ng:#dc2626; --ng-bg:#fee2e2;
+}
+html,body{background:var(--bg);color:var(--text);
+  font-family:"Meiryo","メイリオ","Meiryo UI","Yu Gothic",Arial,sans-serif}
+.wrap{max-width:1280px;margin:auto;padding:16px}
 
-/* 行ホバー＆状態 */
-tbody tr:hover{background-color:#fff9e6!important}
-tr.done td{background-color:#f5f5f5!important;color:#888!important}
-tr.returned td{background-color:#fff4dd!important;color:#8a5200!important}
+/* ===== ヘッダー行（ページ上部の行に使える） ===== */
+.header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 14px}
+.header .title{font-size:22px;font-weight:800;letter-spacing:.02em}
+.header .sub{color:var(--muted);font-size:14px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
 
-/* ボタン・バッジ */
-.btn{border-radius:999px;height:36px;padding:0 16px;border:1px solid #2276d2;background:#2276d2;color:#fff;font-size:13px}
-.btn.secondary{background:#fff;color:#2276d2}
-.badge{padding:.25rem .5rem;border-radius:999px;font-size:12px;border:1px solid #ddd}
-.ok{color:#0b7a3f;background:rgba(37,181,98,.12);border-color:rgba(37,181,98,.25)}
-.hold{color:#8a5200;background:rgba(255,159,26,.16);border-color:rgba(255,159,26,.3)}
+/* ===== KPIカード ===== */
+.kpi{display:flex;gap:12px;flex-wrap:wrap;margin:8px 2px}
+.kpi .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:12px 16px;min-width:220px}
+.kpi .label{color:var(--muted);font-size:13px}
+.kpi .num{font-size:24px;font-weight:800}
+
+/* ===== テーブル ===== */
+.table-wrap{background:var(--card);border:1px solid var(--line);
+  border-radius:12px;box-shadow:0 2px 8px rgba(16,24,40,.04);overflow:auto}
+table{width:100%;border-collapse:separate;border-spacing:0}
+th,td{padding:.65rem .9rem;white-space:nowrap;font-size:13px}
+thead th{position:sticky;top:0;background:#fafcff;border-bottom:1px solid var(--line);z-index:1}
+tbody tr{transition:background-color .15s ease}
+tbody tr:hover{background:#fff9e6}
+td.money{text-align:right}
+
+/* 行の状態 */
+tr.done td{background:#f3f4f6;color:#8b8b8b}
+tr.returned td{background:var(--warn-bg);color:var(--warn)}
+
+/* ===== バッジ ===== */
+.badge{display:inline-block;padding:.22rem .55rem;border-radius:999px;font-size:12px;
+  border:1px solid rgba(0,0,0,.06);background:#fff;color:var(--muted)}
+.badge.ok{color:var(--ok);background:var(--ok-bg);border-color:#b7f3c6}
+.badge.hold{color:var(--warn);background:var(--warn-bg);border-color:#ffe5b0}
+.badge.ng{color:var(--ng);background:var(--ng-bg);border-color:#fecaca}
+
+/* ===== ボタン ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.35rem;
+  height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--pri);
+  background:var(--pri);color:#fff;font-size:13px;white-space:nowrap}
+.btn:hover{background:var(--pri-600);border-color:var(--pri-600)}
+.btn.secondary{background:#fff;color:var(--pri)}
+.btn.ghost{background:#fff;border-color:var(--line);color:var(--text)}
+.btn.warning{background:#fff;border-color:#eab308;color:#a16207}
+
+/* ===== フォーム（ユーザー管理の列整形） ===== */
+table td form{display:flex;gap:8px;align-items:center}
+select,input[type=text],input[type=email],input[type=password],input[type=number]{
+  height:36px;border:1px solid var(--line);border-radius:10px;padding:0 .7rem;background:#fff}
+input[type=file]{border:0}
+label > small{color:var(--muted)}
+.muted{color:var(--muted);}
+
+/* スマホ：テーブル横スクロールで崩れない */
+@media (max-width: 760px){
+  .kpi .card{min-width:160px}
+  th,td{padding:.55rem .7rem;font-size:12.5px}
+}
 </style>
 </head><body><div class=wrap>
 """
