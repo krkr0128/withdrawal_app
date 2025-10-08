@@ -462,6 +462,240 @@ TPL_BASE = """
 </head><body><div class="wrap">
 """
 
+# --- 追加：画面テンプレ ---
+
+TPL_LOGIN = TPL_BASE + """
+<h2>サインイン</h2>
+{% with m = get_flashed_messages(with_categories=true) %}
+  {% if m %}<div class="flash">
+    {% for c,msg in m %}<p>{{ msg }}</p>{% endfor %}
+  </div>{% endif %}
+{% endwith %}
+<form method="post" style="max-width:420px">
+  <label>メール<input type="email" name="email" required></label>
+  <label>パスワード<input type="password" name="password" required></label>
+  <button class="btn" type="submit">ログイン</button>
+  <p style="margin-top:8px">
+    初回は <a href="{{ url_for('setup') }}">セットアップ</a> から管理者を登録してください
+  </p>
+</form>
+</div></body></html>
+"""
+
+TPL_SETUP = TPL_BASE + """
+<h2>初期セットアップ（管理者作成）</h2>
+<form method="post" style="max-width:460px">
+  <label>表示名<input name="name" placeholder="例: 管理太郎"></label>
+  <label>メール<input type="email" name="email" required></label>
+  <label>パスワード<input type="password" name="password" required></label>
+  <button class="btn" type="submit">管理者を作成</button>
+</form>
+<p style="margin-top:8px"><a href="{{ url_for('login') }}">ログインへ戻る</a></p>
+</div></body></html>
+"""
+
+TPL_INDEX = TPL_BASE + """
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+  <div>{{ user.name }}（{{ '管理者' if user.role=='admin' else '作業者' }}） / <a href="{{ url_for('logout') }}">ログアウト</a></div>
+  <div style="display:flex;gap:8px;">
+    {% if user.role == 'admin' %}
+      <a class="btn secondary" href="{{ url_for('users_page') }}">ユーザー管理</a>
+      <a class="btn secondary" href="{{ url_for('export_csv') }}">CSVエクスポート</a>
+      <form id="csvForm" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" style="display:inline;">
+        <input type="file" name="file" accept=".csv" id="csvFile" hidden onchange="csvForm.submit()">
+        <button type="button" class="btn secondary" onclick="csvFile.click()">CSVアップロード</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="kpi">
+  <div class="card"><div class="muted">今日の出金件数</div><div class="num">{{ today_count }}</div></div>
+  <div class="card"><div class="muted">今日の出金金額</div><div class="num">{{ "{:,}".format(today_amount) }} 円</div></div>
+</div>
+
+<form method="get" class="toolbar-wrap">
+  <div class="toolbar">
+    <input type="search" name="q" placeholder="検索：会社/No./銀行/名義/出金口座/担当…" value="{{ q }}">
+    <input type="date"  name="start" value="{{ start }}">
+    <input type="date"  name="end"   value="{{ end }}">
+    <select name="status">
+      <option value="">ステータス: すべて</option>
+      {% for s in stats %}<option value="{{s}}" {{'selected' if s==status else ''}}>{{s}}</option>{% endfor %}
+    </select>
+    <select name="owner">
+      <option value="">担当者: すべて</option>
+      {% for s in owners %}<option value="{{s}}" {{'selected' if s==owner else ''}}>{{s}}</option>{% endfor %}
+    </select>
+    <select name="sort">
+      {% for key,label in [
+        ('company','会社'),('no','No.'),('applied_at','申請日時'),
+        ('bank_name','銀行名'),('branch_name','支店名'),('account_holder','口座名義'),
+        ('amount','金額'),('payout_account','出金口座'),('status','ステータス'),('owner','担当者'),
+      ] %}
+      <option value="{{key}}" {{'selected' if sort==key else ''}}>{{label}}</option>
+      {% endfor %}
+    </select>
+    <label style="display:flex;align-items:center;gap:6px;">
+      <input type="checkbox" name="desc" value="1" {{'checked' if desc else ''}}> 降順
+    </label>
+    <button class="btn secondary" type="submit">検索</button>
+  </div>
+</form>
+
+<div style="margin:6px 2px 10px;color:#6b7280">{{ count }} 件</div>
+
+<form id="bulkForm" method="post" action="{{ url_for('bulk_delete') }}">
+<div class="table-wrap"><table>
+  <thead><tr>
+    {% if user.role == 'admin' %}<th style="width:34px"><input type="checkbox" id="chkAll"></th>{% endif %}
+    <th>会社</th><th>No.</th><th>申請日時</th><th>銀行名</th><th>支店名</th>
+    <th>口座名義</th><th style="text-align:right;">金額</th><th>出金口座</th><th>ステータス</th><th>担当者</th><th>操作</th>
+  </tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr class="{% if r.status=='完了' %}done{% elif r.status=='差し戻し' %}returned{% endif %}">
+      {% if user.role == 'admin' %}
+      <td><input type="checkbox" name="id" value="{{ r.id }}"></td>
+      {% endif %}
+      <td>{{ r.company or '' }}</td>
+      <td>{{ r.no or '' }}</td>
+      <td>{{ r.applied_at.strftime('%Y/%m/%d %H:%M') if r.applied_at else '' }}</td>
+      <td>{{ r.bank_name or '' }}</td>
+      <td>{{ r.branch_name or '' }}</td>
+      <td>{{ r.account_holder or '' }}</td>
+      <td class="money">{{ "{:,}".format(int(r.amount)) if r.amount is not none else '' }}</td>
+      <td>{{ r.payout_account or '' }}</td>
+      <td>
+        {% if r.status=='完了' %}<span class="badge ok">完了</span>
+        {% elif r.status=='差し戻し' %}<span class="badge hold">差し戻し</span>
+        {% else %}<span class="badge">—</span>{% endif %}
+      </td>
+      <td>{{ r.owner or '' }}</td>
+      <td>
+        {% if r.status not in ['完了','差し戻し'] %}
+          <div style="display:flex;gap:6px;">
+            <button class="btn" data-id="{{r.id}}" data-next="完了" onclick="return toggleStatus(event,this)">完了</button>
+            <button class="btn secondary warn" data-id="{{r.id}}" data-next="差し戻し" onclick="return toggleStatus(event,this)">差し戻し</button>
+          </div>
+        {% elif r.status=='完了' %}
+          <span class="muted">完了済み</span>
+        {% else %}
+          <span class="muted">差し戻し済み</span>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+
+{% if user.role == 'admin' %}
+  <div style="margin-top:12px">
+    <button class="btn danger" type="button" onclick="bulkDelete()">選択行を一括削除（アーカイブへ）</button>
+  </div>
+{% endif %}
+</form>
+
+<script>
+function toggleStatus(ev, btn){
+  ev.preventDefault();
+  const id = btn.dataset.id, next = btn.dataset.next;
+  fetch('{{ url_for("toggle_status") }}', {
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:`id=${id}&next=${encodeURIComponent(next)}`
+  }).then(r=>r.json()).then(d=>{
+    if(d.ok){ location.reload(); } else { alert('更新失敗'); }
+  });
+  return false;
+}
+const chkAll = document.getElementById('chkAll');
+if(chkAll){
+  chkAll.addEventListener('change', ()=>{
+    document.querySelectorAll('input[name="id"]').forEach(c=>c.checked = chkAll.checked);
+  });
+}
+function bulkDelete(){
+  const ids = [...document.querySelectorAll('input[name="id"]:checked')].map(x=>x.value);
+  if(ids.length==0){ alert('行が選択されていません'); return; }
+  if(!confirm(`選択 ${ids.length} 件を削除（アーカイブ保存）します。よろしいですか？`)) return;
+  fetch('{{ url_for("bulk_delete") }}', {
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:`ids=${ids.join(',')}`
+  }).then(r=>r.json()).then(d=>{
+    if(d.ok){ location.reload(); } else { alert('削除失敗: '+(d.msg||'')); }
+  });
+}
+</script>
+</div></body></html>
+"""
+
+TPL_USERS = TPL_BASE + """
+<h2>ユーザー管理</h2>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+  <div>{{ me.name }}（{{ '管理者' if me.role=='admin' else '作業者' }}） / <a href="{{ url_for('logout') }}">ログアウト</a></div>
+  <div style="display:flex;gap:8px;">
+    <a class="btn secondary" href="{{ url_for('index') }}">&larr; 出金一覧へ</a>
+  </div>
+</div>
+
+<div class="table-wrap" style="margin-bottom:18px;">
+<table>
+  <thead><tr>
+    <th style="width:240px">メール</th>
+    <th style="width:160px">表示名</th>
+    <th style="width:140px">ロール</th>
+    <th style="width:160px">作成日時</th>
+    <th>操作</th>
+  </tr></thead>
+  <tbody>
+    {% for u in users %}
+    <tr>
+      <td>{{ u.email }}</td>
+      <td>{{ u.name or u.email.split('@')[0] }}</td>
+      <td>
+        <form method="post" action="{{ url_for('users_role') }}" style="display:flex;gap:8px;align-items:center">
+          <input type="hidden" name="id" value="{{ u.id }}">
+          <select name="role">
+            <option value="admin"  {{ 'selected' if u.role=='admin' else '' }}>admin(管理者)</option>
+            <option value="worker" {{ 'selected' if u.role!='admin' else '' }}>worker(作業者)</option>
+          </select>
+          <button class="btn secondary" style="height:32px;padding:0 10px;">変更</button>
+        </form>
+      </td>
+      <td>{{ u.created_at.strftime('%Y/%m/%d %H:%M') if u.created_at else '' }}</td>
+      <td>
+        <form method="post" action="{{ url_for('users_resetpw') }}" style="display:flex;gap:8px;align-items:center">
+          <input type="hidden" name="id" value="{{ u.id }}">
+          <input type="password" name="password" placeholder="新パスワード" required style="height:32px">
+          <button class="btn" style="height:32px;padding:0 12px;">PW再設定</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h3>ユーザー追加</h3>
+<form method="post" action="{{ url_for('users_create') }}" class="table-wrap" style="padding:12px;border-radius:12px;">
+  <div class="grid">
+    <label>メール<input type="email" name="email" required></label>
+    <label>表示名<input type="text" name="name"></label>
+    <label>パスワード<input type="password" name="password" required></label>
+    <label>ロール
+      <select name="role">
+        <option value="worker">worker(作業者)</option>
+        <option value="admin">admin(管理者)</option>
+      </select>
+    </label>
+  </div>
+  <button class="btn" type="submit">追加</button>
+</form>
+</div></body></html>
+"""
+
 # ------------------ 起動 ------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
