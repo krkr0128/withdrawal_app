@@ -1,0 +1,62 @@
+:root{
+  --bg:#f4f6f9; --card:#fff; --line:#e6eaf0; --txt:#1f2937;
+  --muted:#6b7280; --primary:#2276d2; --hover:#fff9e6;
+}
+html,body{
+  background:var(--bg);
+  color:var(--txt);
+  font-family:"Meiryo","メイリオ","Meiryo UI","Yu Gothic","Hiragino Kaku Gothic ProN",Arial,sans-serif;
+}
+
+/* layout */
+.wrap{max-width:1280px;margin:auto;padding:12px}
+
+/* buttons & links */
+a, a:visited { text-decoration:none !important; }       /* 下線消す */
+.btn{
+  border-radius:999px; height:36px; padding:0 16px;
+  border:1px solid var(--primary); background:var(--primary); color:#fff; font-size:13px;
+  display:inline-flex; align-items:center; gap:6px; vertical-align:middle;
+}
+.btn.secondary{background:#fff;color:var(--primary)}
+.btn.small{ height:30px; padding:0 12px; font-size:12px }
+
+/* toolbar */
+.toolbar-wrap{
+  background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px;
+  box-shadow:0 2px 8px rgba(16,24,40,.04); margin:14px 0;
+}
+.toolbar{
+  display:grid; grid-template-columns:1fr 200px 200px 200px 110px 110px; gap:10px; align-items:center;
+}
+.toolbar input,.toolbar select{
+  background:#fff; border:1px solid var(--line)!important; border-radius:999px!important;
+  padding:.6rem .9rem; height:38px; font-size:13px;
+}
+
+/* table */
+.table-wrap{
+  background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:auto;
+  box-shadow:0 2px 8px rgba(16,24,40,.04);
+}
+.table-wrap table{font-size:13px; width:100%}
+th,td{white-space:nowrap; padding:.6rem .8rem}
+thead th{position:sticky; top:0; background:#fbfdff; z-index:1; border-bottom:1px solid var(--line)}
+tbody tr:hover{background-color:var(--hover)!important}
+td.money{text-align:right}
+
+/* status badge */
+.badge{display:inline-block;padding:.2rem .55rem;border-radius:999px;font-size:12px;border:1px solid rgba(0,0,0,.06)}
+.ok{color:#0b7a3f;background:rgba(37,181,98,.12);border-color:rgba(37,181,98,.25)}
+.hold{color:#8a5200;background:rgba(255,159,26,.16);border-color:rgba(255,159,26,.3)}
+.ng{color:#7a0b0b;background:rgba(224,49,49,.12);border-color:rgba(224,49,49,.25)}
+
+/* row styles */
+tr.done td{background-color:#f5f5f5!important;color:#888!important}
+tr.returned td{background-color:#fff4dd!important;color:#8a5200!important}
+
+/* header right area (CSVアップロードの浮き防止) */
+.header-actions{
+  display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+}
+.header-actions form{ margin:0 } /* フォームが1px分だけズレる対策 */
